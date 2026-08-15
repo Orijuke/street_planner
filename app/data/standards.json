@@ -3,58 +3,43 @@
     "standard": "RF construction and road-design norms (GOST, SP)",
     "unit": "meters",
     "value_order": ["min", "typical", "max"],
-    "note": "First implementation phase uses only the 'typical' value for generation. min/max are kept for future refinement (e.g. picking widths based on street category or traffic volume).",
+    "note": "First implementation phase uses only 'typical' values everywhere. min/max are kept for later refinement.",
     "sources": [
       "ГОСТ Р 52289-2019 — Технические средства организации дорожного движения",
-      "СП 42.13330.2016 — Градостроительство. Планировка и застройка городских и сельских поселений",
+      "СП 42.13330.2016 — Градостроительство. Планировка и застройка городских и сельских поселений (п. 11.5 — ширина тротуаров)",
+      "СП 396.1325800.2018 — Улицы и дороги населённых пунктов. Правила градостроительного проектирования (п. 11.5 — ширина полос движения)",
       "СП 34.13330.2012 (СНиП 2.05.02-85*) — Автомобильные дороги",
-      "СП 396.1325800.2018 — Улицы и дороги населённых пунктов",
       "СП 113.13330.2016 (СНиП 21-02-99*) — Стоянки автомобилей",
       "ГОСТ 33150-2014 — Автомобильные дороги общего пользования. Проектирование пешеходных и велосипедных дорожек"
     ]
   },
-  "street_components": {
-    "car_lane": {
-      "min": 3.00,
-      "typical": 3.50,
-      "max": 3.75,
-      "source": "ГОСТ Р 52289-2019 (мин. 3.00 м для размечаемой полосы); СП 34.13330.2012 (2.75-3.5 м местные улицы, 3.75 м магистрали)"
+
+  "road_types": {
+    "proezd": {
+      "label_ru": "Проезд",
+      "label_en": "Local access road (proyezd)",
+      "design_speed_kmh": { "typical": 20 },
+      "lanes_per_direction": { "typical": 1, "max": 1 },
+      "car_lane": {
+        "min": 3.00, "typical": 3.50, "max": 3.50,
+        "source": "Практика применения СП 42.13330 для внутриквартальных проездов (проезжая часть 3.5 м)"
+      },
+      "sidewalk": {
+        "min": 1.00, "typical": 1.50, "max": 2.00,
+        "source": "Практика применения СП 42.13330 для внутриквартальных проездов (тротуар 1.5 м)"
+      },
+      "allowed_elements": ["car_lane", "sidewalk", "parking_lane", "grass_verge"]
     },
-    "bus_lane": {
-      "min": 3.00,
-      "typical": 3.50,
-      "max": 4.00,
-      "source": "PLACEHOLDER: no dedicated GOST/SP bus-lane table found yet; based on car_lane widened for bus clearance. Verify before relying on this."
-    },
-    "bike_lane": {
-      "min": 0.75,
-      "typical": 1.50,
-      "max": 2.50,
-      "source": "ГОСТ 33150-2014 (абсолютный минимум 0.75 м однополосная; двухполосная ≥ 1.50 м)"
-    },
-    "sidewalk": {
-      "min": 1.00,
-      "typical": 1.50,
-      "max": 3.00,
-      "source": "СП 42.13330.2016 практика проездов (тротуар 1.5 м при проезжей части 3.5 м)"
-    },
-    "grass_verge": {
-      "min": 1.00,
-      "typical": 2.00,
-      "max": 3.00,
-      "source": "PLACEHOLDER: no dedicated озеленение width table found yet; commonly-cited practical range. Verify before relying on this."
-    },
-    "parking_lane": {
-      "min": 2.30,
-      "typical": 2.50,
-      "max": 3.60,
-      "source": "СП 113.13330.2016 (стандартное машиноместо 2.5 x 5.3 м; мин. 2.3 м; инвалидное место до 3.6 м)"
-    },
-    "shoulder": {
-      "min": 1.75,
-      "typical": 2.50,
-      "max": 4.00,
-      "source": "СП 34.13330.2012 (обочины 1.75-4 м в зависимости от категории дороги)"
-    }
-  }
-}
+
+    "local_street": {
+      "label_ru": "Улица местного значения",
+      "label_en": "Local street",
+      "design_speed_kmh": { "typical": 30 },
+      "lanes_per_direction": { "typical": 1, "max": 2 },
+      "car_lane": {
+        "min": 3.00, "typical": 3.25, "max": 3.50,
+        "source": "СП 396.1325800.2018, п. 11.5: улицы и дороги местного значения — 3-3.5 м"
+      },
+      "sidewalk": {
+        "min": 2.00, "typical": 2.25, "max": 2.25,
+        "source": "СП 42.13330.2016, п. 11.5: не менее 2 м; расчётная ширина 2.25 м (кратно 0.75,
