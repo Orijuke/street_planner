@@ -1,0 +1,18 @@
+{
+  "type": "Feature",
+  "properties": { "name": "L-shaped sample plot" },
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [0, 0],
+        [180, 0],
+        [180, 60],
+        [70, 60],
+        [70, 140],
+        [0, 140],
+        [0, 0]
+      ]
+    ]
+  }
+}
