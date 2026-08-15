@@ -42,4 +42,64 @@
       },
       "sidewalk": {
         "min": 2.00, "typical": 2.25, "max": 2.25,
-        "source": "СП 42.13330.2016, п. 11.5: не менее 2 м; расчётная ширина 2.25 м (кратно 0.75,
+        "source": "СП 42.13330.2016, п. 11.5: не менее 2 м; расчётная ширина 2.25 м (кратно 0.75 м), примечание 15 к табл. 11.2"
+      },
+      "allowed_elements": ["car_lane", "sidewalk", "bike_lane", "parking_lane", "grass_verge"]
+    },
+
+    "district_arterial": {
+      "label_ru": "Магистральная улица районного значения",
+      "label_en": "District arterial street",
+      "design_speed_kmh": { "typical": 40 },
+      "lanes_per_direction": { "typical": 2, "max": 3 },
+      "car_lane": {
+        "min": 3.25, "typical": 3.50, "max": 3.75,
+        "source": "СП 396.1325800.2018, п. 11.5: магистральные улицы и дороги — 3.25-3.75 м"
+      },
+      "sidewalk": {
+        "min": 2.25, "typical": 3.00, "max": 3.00,
+        "source": "СП 42.13330.2016, п. 11.5: магистральные улицы районного значения — не менее 2.25 м"
+      },
+      "allowed_elements": ["car_lane", "sidewalk", "bike_lane", "bus_lane", "parking_lane", "grass_verge"]
+    },
+
+    "citywide_arterial": {
+      "label_ru": "Магистральная улица общегородского значения",
+      "label_en": "Citywide arterial street",
+      "design_speed_kmh": { "typical": 60 },
+      "lanes_per_direction": { "typical": 3, "max": 4 },
+      "car_lane": {
+        "min": 3.25, "typical": 3.75, "max": 3.75,
+        "source": "СП 396.1325800.2018, п. 11.5: магистральные улицы и дороги — 3.25-3.75 м"
+      },
+      "sidewalk": {
+        "min": 3.00, "typical": 4.00, "max": 4.50,
+        "source": "СП 42.13330.2016, п. 11.5: магистральные улицы общегородского значения — 3-4.5 м"
+      },
+      "allowed_elements": ["car_lane", "sidewalk", "bike_lane", "bus_lane", "parking_lane", "grass_verge"]
+    }
+  },
+
+  "street_components": {
+    "bus_lane": {
+      "min": 3.00, "typical": 3.50, "max": 4.00,
+      "source": "PLACEHOLDER: no dedicated GOST/SP bus-lane table found yet; based on car_lane widened for bus clearance. Verify before relying on this."
+    },
+    "bike_lane": {
+      "min": 0.75, "typical": 1.50, "max": 2.50,
+      "source": "ГОСТ 33150-2014 (абсолютный минимум 0.75 м однополосная; двухполосная ≥ 1.50 м)"
+    },
+    "grass_verge": {
+      "min": 1.00, "typical": 2.00, "max": 3.00,
+      "source": "PLACEHOLDER: no dedicated озеленение width table found yet; commonly-cited practical range. Verify before relying on this."
+    },
+    "parking_lane": {
+      "min": 2.30, "typical": 2.50, "max": 3.60,
+      "source": "СП 113.13330.2016 (стандартное машиноместо 2.5 x 5.3 м; мин. 2.3 м; инвалидное место до 3.6 м)"
+    },
+    "shoulder": {
+      "min": 1.75, "typical": 2.50, "max": 4.00,
+      "source": "СП 34.13330.2012 (обочины 1.75-4 м в зависимости от категории дороги)"
+    }
+  }
+}
