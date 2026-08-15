@@ -152,3 +152,28 @@ def generate_straight_road(
 
     actual_exit_edge_idx = _edge_containing_point(edges, exit_point)
     if actual_exit_edge_idx is None:
+        actual_exit_edge_idx = exit_edge_idx  # fall back to the requested edge
+
+    car_lane_width = get_typical_width("car_lane", road_type=road_type)
+    desired_width = car_lane_width * lanes
+
+    crossing_edges = [entry_edge, edges[actual_exit_edge_idx]]
+    max_allowed_width = min(edge_length(e) for e in crossing_edges)
+    width = min(desired_width, max_allowed_width)
+    if width <= 0:
+        raise RoadGenerationError("Chosen edges are too short to fit any road width.")
+
+    centerline = LineString([entry_point, exit_point])
+    road_polygon = centerline.buffer(width / 2, cap_style="flat")
+    road_polygon = road_polygon.intersection(polygon)
+
+    return RoadSegment(
+        entry_edge_idx=entry_edge_idx,
+        exit_edge_idx=exit_edge_idx,
+        actual_exit_edge_idx=actual_exit_edge_idx,
+        entry_point=entry_point,
+        exit_point=exit_point,
+        width=width,
+        centerline=centerline,
+        polygon=road_polygon,
+    )
