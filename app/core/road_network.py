@@ -192,6 +192,16 @@ def generate_road(
     dir_x, dir_y = dx / length, dy / length
     perp_x, perp_y = -dir_y, dir_x  # unit vector perpendicular to the axis
 
+    # entry_point/exit_point sit exactly ON the border. If the border edge isn't
+    # perfectly perpendicular to the road direction (the usual case), a strip that
+    # stops precisely at those points gets an artificial flat cut instead of
+    # flowing out to the edge's real corners -- and floating-point precision right
+    # at the boundary can also fragment the intersection. Pushing both ends past
+    # the border before clipping lets the polygon's own edges decide the cut.
+    overshoot = max(total_width * 3, 1.0)
+    ext_ex, ext_ey = ex - dir_x * overshoot, ey - dir_y * overshoot
+    ext_xx, ext_xy = xx + dir_x * overshoot, xy + dir_y * overshoot
+
     strips: List[Tuple[str, Polygon]] = []
     running_offset = -total_width / 2
     for name, width in scaled_widths:
@@ -199,10 +209,10 @@ def generate_road(
         end_offset = running_offset + width
         running_offset = end_offset
 
-        p1 = (ex + perp_x * start_offset, ey + perp_y * start_offset)
-        p2 = (ex + perp_x * end_offset, ey + perp_y * end_offset)
-        p3 = (xx + perp_x * end_offset, xy + perp_y * end_offset)
-        p4 = (xx + perp_x * start_offset, xy + perp_y * start_offset)
+        p1 = (ext_ex + perp_x * start_offset, ext_ey + perp_y * start_offset)
+        p2 = (ext_ex + perp_x * end_offset, ext_ey + perp_y * end_offset)
+        p3 = (ext_xx + perp_x * end_offset, ext_xy + perp_y * end_offset)
+        p4 = (ext_xx + perp_x * start_offset, ext_xy + perp_y * start_offset)
 
         strip_polygon = Polygon([p1, p2, p3, p4]).intersection(polygon)
         if not strip_polygon.is_empty:
