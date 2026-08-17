@@ -23,7 +23,7 @@ EDGE_EXIT_PEN = QPen(QColor("#dc2626"))    # red
 # Fill color per cross-section element. Anything not listed falls back to STRIP_DEFAULT_COLOR.
 STRIP_COLORS = {
     "car_lane": "#4b5563",       # asphalt gray
-    "bus_lane": "#7c3aed",       # purple
+    "bus_lane": "#b91c1c",       # red
     "bike_lane": "#0ea5e9",      # sky blue
     "parking_lane": "#78716c",   # stone gray
     "sidewalk": "#d1d5db",       # light gray
