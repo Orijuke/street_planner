@@ -1,30 +1,34 @@
 """
-Main application window: choose a border file, pick entry/exit edges, and
-generate a simple straight road between them.
+Main application window: choose a border file, pick a road type + street
+elements in the side panel, select entry/exit edges on the map, and
+generate a straight road built from that cross-section.
 """
 from __future__ import annotations
 
 from typing import Optional
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
-    QDoubleSpinBox, QFileDialog, QLabel, QMainWindow, QMessageBox,
+    QDockWidget, QDoubleSpinBox, QFileDialog, QLabel, QMainWindow, QMessageBox,
     QStatusBar, QToolBar, QVBoxLayout, QWidget,
 )
 
 from app.core.border_loader import BorderLoadError, load_border
-from app.core.road_network import RoadGenerationError, edge_length, generate_straight_road, polygon_edges
+from app.core.cross_section import build_cross_section
+from app.core.road_network import RoadGenerationError, edge_length, generate_road, polygon_edges
 from app.ui.map_canvas import MapCanvas
+from app.ui.parameter_panel import ParameterPanel
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Street Planner")
-        self.resize(1100, 750)
+        self.resize(1300, 800)
 
         self.plot = None
-        self.selection_mode: Optional[str] = None  # None | "entry" | "exit"
+        self.selection_mode: Optional[str] = None
         self.entry_edge_idx: Optional[int] = None
         self.exit_edge_idx: Optional[int] = None
 
@@ -39,6 +43,12 @@ class MainWindow(QMainWindow):
         self.canvas.edge_clicked.connect(self.on_edge_clicked)
         layout.addWidget(self.canvas)
         self.setCentralWidget(central)
+
+        self.parameter_panel = ParameterPanel(self)
+        dock = QDockWidget("Parameters", self)
+        dock.setWidget(self.parameter_panel)
+        dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
 
         toolbar = QToolBar("Main", self)
         toolbar.setMovable(False)
@@ -71,7 +81,7 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
         self.generate_action = QAction("Generate road", self)
         self.generate_action.setEnabled(False)
-        self.generate_action.triggered.connect(self.generate_road)
+        self.generate_action.triggered.connect(self.generate_road_clicked)
         toolbar.addAction(self.generate_action)
 
         status = QStatusBar(self)
@@ -80,7 +90,6 @@ class MainWindow(QMainWindow):
         status.addWidget(self.plot_info_label)
 
     def _set_selection_mode(self, mode: str) -> None:
-        # Only one of entry/exit selection can be "armed" at a time.
         if mode == "entry":
             self.selection_mode = "entry" if self.entry_action.isChecked() else None
             self.exit_action.setChecked(False)
@@ -118,7 +127,6 @@ class MainWindow(QMainWindow):
         self.plot_info_label.setText(
             f"Loaded: {plot.name}  |  bounds: "
             f"({minx:.2f}, {miny:.2f}) -> ({maxx:.2f}, {maxy:.2f})  |  "
-            f"area (raw units): {plot.area:.2f}  |  "
             f"Click 'Select entry edge', then click a border edge on the map."
         )
 
@@ -158,22 +166,35 @@ class MainWindow(QMainWindow):
         if parts:
             self.plot_info_label.setText("Selected: " + "  |  ".join(parts))
 
-    def generate_road(self) -> None:
+    def generate_road_clicked(self) -> None:
         if self.plot is None or self.entry_edge_idx is None or self.exit_edge_idx is None:
             return
 
+        road_type = self.parameter_panel.current_road_type()
+        chosen_elements = self.parameter_panel.chosen_elements()
+        if not chosen_elements:
+            QMessageBox.information(self, "Nothing selected", "Check at least one street element first.")
+            return
+
+        cross_section = build_cross_section(
+            road_type=road_type,
+            chosen_elements=chosen_elements,
+            lanes=self.parameter_panel.car_lane_count(),
+        )
+
         try:
-            road = generate_straight_road(
+            road = generate_road(
                 self.plot,
                 entry_edge_idx=self.entry_edge_idx,
                 exit_edge_idx=self.exit_edge_idx,
+                cross_section=cross_section,
                 angle_offset_deg=self.angle_spinbox.value(),
             )
         except RoadGenerationError as exc:
             QMessageBox.warning(self, "Could not generate road", str(exc))
             return
 
-        self.canvas.draw_road(road.polygon)
+        self.canvas.draw_cross_section(road.strips)
 
         note = ""
         if road.actual_exit_edge_idx != self.exit_edge_idx:
@@ -181,7 +202,11 @@ class MainWindow(QMainWindow):
                 f"  (note: at this angle the road actually reaches edge "
                 f"#{road.actual_exit_edge_idx}, not the selected exit edge #{self.exit_edge_idx})"
             )
+        scale_note = ""
+        if road.scale_factor < 0.999:
+            scale_note = f"  (cross-section scaled to {road.scale_factor * 100:.0f}% to fit)"
+
         self.plot_info_label.setText(
-            f"Road generated: width {road.width:.2f} m, "
-            f"length {road.centerline.length:.2f} m{note}"
+            f"Road generated: width {road.total_width:.2f} m, "
+            f"length {road.centerline.length:.2f} m{scale_note}{note}"
         )
