@@ -15,12 +15,12 @@ from typing import List, Tuple
 
 from app.core.standards import get_typical_width
 
-# Left-to-right layout order. Anything not listed falls back to the end.
+# Left-to-right layout order (outermost first). Anything not listed falls back to the end.
 _ELEMENT_ORDER = [
-    "grass_verge",
-    "sidewalk",
     "parking_lane",
     "bike_lane",
+    "grass_verge",
+    "sidewalk",
     "bus_lane",
     "car_lane",
 ]
