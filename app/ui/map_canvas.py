@@ -1,10 +1,10 @@
 """
 QGraphicsView-based canvas that draws a land-plot border, its edges (for
-entry/exit selection), and any generated road.
+entry/exit selection), and a generated road's cross-section strips.
 """
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from PySide6.QtCore import Qt, QPointF, Signal
 from PySide6.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF
@@ -20,10 +20,19 @@ EDGE_DEFAULT_PEN = QPen(QColor("#94a3b8"))
 EDGE_ENTRY_PEN = QPen(QColor("#16a34a"))   # green
 EDGE_EXIT_PEN = QPen(QColor("#dc2626"))    # red
 
-ROAD_BRUSH = QBrush(QColor("#4b5563"))     # asphalt gray
-ROAD_PEN = QPen(QColor("#374151"))
+# Fill color per cross-section element. Anything not listed falls back to STRIP_DEFAULT_COLOR.
+STRIP_COLORS = {
+    "car_lane": "#4b5563",       # asphalt gray
+    "bus_lane": "#7c3aed",       # purple
+    "bike_lane": "#0ea5e9",      # sky blue
+    "parking_lane": "#78716c",   # stone gray
+    "sidewalk": "#d1d5db",       # light gray
+    "grass_verge": "#4ade80",    # green
+}
+STRIP_DEFAULT_COLOR = "#9ca3af"
+STRIP_PEN = QPen(QColor("#1f2937"))
 
-for _pen in (BORDER_PEN, EDGE_DEFAULT_PEN, EDGE_ENTRY_PEN, EDGE_EXIT_PEN, ROAD_PEN):
+for _pen in (BORDER_PEN, EDGE_DEFAULT_PEN, EDGE_ENTRY_PEN, EDGE_EXIT_PEN, STRIP_PEN):
     _pen.setWidthF(0)  # cosmetic: constant on-screen width regardless of zoom
 
 EDGE_HIT_WIDTH = 6  # visual + click width for edge lines (pixels, cosmetic)
@@ -98,20 +107,26 @@ class MapCanvas(QGraphicsView):
         pen.setCosmetic(True)
         self._edge_items[idx].setPen(pen)
 
-    def draw_road(self, road_geometry) -> None:
-        """road_geometry: a shapely Polygon or MultiPolygon."""
+    def draw_cross_section(self, strips: List[Tuple[str, object]]) -> None:
+        """strips: list of (element_name, shapely Polygon/MultiPolygon), outer-to-outer order."""
         for item in self._road_items:
             self._scene.removeItem(item)
         self._road_items = []
 
-        polys = [road_geometry] if road_geometry.geom_type == "Polygon" else list(road_geometry.geoms)
-        for poly in polys:
-            if poly.is_empty:
+        for name, geometry in strips:
+            if geometry.is_empty:
                 continue
-            qpoly = QPolygonF([QPointF(x, -y) for x, y in poly.exterior.coords])
-            item = self._scene.addPolygon(qpoly, ROAD_PEN, ROAD_BRUSH)
-            item.setZValue(2)
-            self._road_items.append(item)
+            polys = [geometry] if geometry.geom_type == "Polygon" else list(geometry.geoms)
+            color = QColor(STRIP_COLORS.get(name, STRIP_DEFAULT_COLOR))
+            brush = QBrush(color)
+            for poly in polys:
+                if poly.is_empty or not poly.exterior.coords:
+                    continue
+                qpoly = QPolygonF([QPointF(x, -y) for x, y in poly.exterior.coords])
+                item = self._scene.addPolygon(qpoly, STRIP_PEN, brush)
+                item.setZValue(2)
+                item.setToolTip(name)
+                self._road_items.append(item)
 
     def mousePressEvent(self, event) -> None:
         item = self.itemAt(event.pos())
